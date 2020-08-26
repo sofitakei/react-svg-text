@@ -38,11 +38,15 @@ class Text extends Component {
     scaleToFit: false,
     textAnchor: 'start',
     verticalAnchor: 'end', // default SVG behavior
+    fontSize: 15,
+    lineSpacing: 0.3
   };
 
   state = {
     wordsByLines: [],
   };
+
+  displayedLines = () => this.state.wordsByLines.filter((( { showLine } )=>showLine ))
 
   componentWillMount() {
     this.updateWordsByLines(this.props, true);
@@ -57,11 +61,12 @@ class Text extends Component {
   }
 
   updateWordsByLines(props, needCalculate) {
+
     // Only perform calculations if using features that require them (multiline, scaleToFit)
     if ((props.width || props.scaleToFit)) {
       if (needCalculate) {
         const wordWidths = calculateWordWidths(props);
-
+    
         if (wordWidths) {
           const { wordsWithComputedWidth, spaceWidth } = wordWidths;
 
@@ -91,7 +96,7 @@ class Text extends Component {
   }
 
   calculateWordsByLines(wordsWithComputedWidth, spaceWidth, lineWidth) {
-    const { scaleToFit } = this.props;
+    const { scaleToFit, height, fontSize, lineSpacing } = this.props;
     return wordsWithComputedWidth.reduce((result, { word, width }) => {
       const currentLine = result[result.length - 1];
 
@@ -102,31 +107,34 @@ class Text extends Component {
         currentLine.width += width + spaceWidth;
       } else {
         // Add first word to line or word is too long to scaleToFit on existing line
-        const newLine = { words: [word], width };
-        result.push(newLine);
+          const newLine = { words: [word], width, showLine: (fontSize + lineSpacing) * (result.length + 1) < height };
+          result.push(newLine); 
       }
-
       return result;
     }, []);
   }
+
 
   render() {
     const {
       dx,
       dy,
+      fontSize,
       textAnchor,
       verticalAnchor,
       scaleToFit,
       angle,
       lineHeight,
+      lineSpacing,
       capHeight,
+      getOffsetX,
       ...textProps
     } = this.props;
     const { wordsByLines } = this.state;
 
     const x = textProps.x + dx;
     const y = textProps.y + dy;
-
+    let offsetX = 0
     let startDy;
     switch (verticalAnchor) {
       case 'start':
@@ -134,11 +142,11 @@ class Text extends Component {
         break;
       case 'middle':
         startDy = reduceCSSCalc(
-          `calc(${(wordsByLines.length - 1) / 2} * -${lineHeight} + (${capHeight} / 2))`
+          `calc(${(this.displayedLines().length - 1) / 2} * -${lineHeight} + (${capHeight} / 2))`
         );
         break;
       default:
-        startDy = reduceCSSCalc(`calc(${wordsByLines.length - 1} * -${lineHeight})`);
+        startDy = reduceCSSCalc(`calc(${this.displayedLines().length - 1} * -${lineHeight})`);
         break;
     }
 
@@ -157,20 +165,29 @@ class Text extends Component {
     if (transforms.length) {
       textProps.transform = transforms.join(' ');
     }
+    if(getOffsetX){
+      const renderHeight = (fontSize + lineSpacing) * this.displayedLines().length
+      offsetX = getOffsetX(renderHeight)
+    }
 
     return (
       <text
-        x={x}
+        x={x + offsetX}
         y={y}
         textAnchor={textAnchor}
         {...textProps}
       >
         {
-        wordsByLines.map((line, index) => (
-          <tspan x={x} dy={index === 0 ? startDy : lineHeight} key={index}>
+        this.displayedLines().map((line, index) => (
+          <tspan x={x + offsetX} dy={index === 0 ? startDy : lineHeight} key={index}>
             {line.words.join(' ')}
           </tspan>
         ))
+
+      }
+
+      { wordsByLines.length > this.displayedLines().length &&
+       [<tspan>...</tspan>, <title>{this.props.children}</title>]
       }
       </text>
     );
