@@ -187,7 +187,7 @@ class Text extends Component {
       }
 
       { wordsByLines.length > this.displayedLines().length &&
-       [<tspan>...</tspan>, <title>{this.props.children}</title>]
+       [<tspan key="ellipsis">...</tspan>, <title key="title">{this.props.children}</title>]
       }
       </text>
     );
