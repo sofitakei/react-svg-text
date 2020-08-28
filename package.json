@@ -1,6 +1,6 @@
 {
   "name": "@studysync/react-svg-text",
-  "version": "0.1.3",
+  "version": "0.1.4",
   "homepage": "https://techniq.github.io/react-svg-text/",
   "repository": "techniq/react-svg-text",
   "files": [
@@ -39,7 +39,8 @@
     "build-docs": "cd stories && yarn install && cd .. && build-storybook -c stories -o docs",
     "deploy-docs": "gh-pages -d docs",
     "preversion": "yarn build",
-    "postpublish": "yarn build-docs && yarn deploy-docs"
+    "postpublish": "yarn build-docs && yarn deploy-docs",
+    "prepare": "npm run build" 
   },
   "license": "MIT"
 }
