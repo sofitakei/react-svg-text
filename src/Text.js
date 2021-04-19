@@ -1,197 +1,157 @@
-import React, { Component } from 'react';
-import PropTypes from 'prop-types';
-import reduceCSSCalc from 'reduce-css-calc';
-import { getStringWidth } from './utils';
+import PropTypes from 'prop-types'
+import { useCallback, useEffect, useMemo, useState } from 'react'
+import reduceCSSCalc from 'reduce-css-calc'
+import calculateWordWidths from './utils'
 
-const calculateWordWidths = (props) => {
-  try {
-    const words = props.children ? props.children.toString().split(/\s+/) : [];
-    const wordsWithComputedWidth = words.map(word => (
-      { word, width: getStringWidth(word, props.style) }
-    ));
+const Text = (props) => {
+  const {
+    angle,
+    capHeight,
+    children,
+    dx,
+    dy,
+    fontSize,
+    height,
+    lineHeight,
+    lineSpacing,
+    offsetX,
+    scaleToFit,
+    style,
+    textAnchor,
+    verticalAnchor,
+    width,
+    ...textProps
+  } = props
+  const [wordsByLines, setWordsByLines] = useState([])
+  const displayedLines = useMemo(() => wordsByLines.filter(({ showLine }) => showLine), [wordsByLines])
 
-    const spaceWidth = getStringWidth('\u00A0', props.style);
+  const x = textProps.x + dx
+  const y = textProps.y + dy
 
-    return { wordsWithComputedWidth, spaceWidth };
-  } catch (e) {
-    return null;
-  }
-};
+  const calculateWordsByLines = useCallback(() => {
+    const wordWidths = calculateWordWidths(children, style)
+    const { spaceWidth, wordsWithComputedWidth } = wordWidths
+    return wordsWithComputedWidth.reduce((result, { word, width: wordWidth }) => {
+      const currentLine = result[result.length - 1]
 
-class Text extends Component {
-
-  static propTypes = {
-    scaleToFit: PropTypes.bool,
-    angle: PropTypes.number,
-    textAnchor: PropTypes.oneOf(['start', 'middle', 'end', 'inherit']),
-    verticalAnchor: PropTypes.oneOf(['start', 'middle', 'end']),
-    style: PropTypes.object,
-  };
-
-  static defaultProps = {
-    x: 0,
-    y: 0,
-    dx: 0,
-    dy: 0,
-    lineHeight: '1em',
-    capHeight: '0.71em', // Magic number from d3
-    scaleToFit: false,
-    textAnchor: 'start',
-    verticalAnchor: 'end', // default SVG behavior
-    fontSize: 15,
-    lineSpacing: 0.3
-  };
-
-  state = {
-    wordsByLines: [],
-  };
-
-  displayedLines = () => this.state.wordsByLines.filter((( { showLine } )=>showLine ))
-
-  componentWillMount() {
-    this.updateWordsByLines(this.props, true);
-  }
-
-  componentWillReceiveProps(nextProps) {
-    const needCalculate = (
-      this.props.children !== nextProps.children ||
-      this.props.style !== nextProps.style
-    );
-    this.updateWordsByLines(nextProps, needCalculate);
-  }
-
-  updateWordsByLines(props, needCalculate) {
-
-    // Only perform calculations if using features that require them (multiline, scaleToFit)
-    if ((props.width || props.scaleToFit)) {
-      if (needCalculate) {
-        const wordWidths = calculateWordWidths(props);
-    
-        if (wordWidths) {
-          const { wordsWithComputedWidth, spaceWidth } = wordWidths;
-
-          this.wordsWithComputedWidth = wordsWithComputedWidth;
-          this.spaceWidth = spaceWidth;
-        } else {
-          this.updateWordsWithoutCalculate(props);
-
-          return;
-        }
-      }
-
-      const wordsByLines = this.calculateWordsByLines(
-        this.wordsWithComputedWidth,
-        this.spaceWidth,
-        props.width
-      );
-      this.setState({ wordsByLines });
-    } else {
-      this.updateWordsWithoutCalculate(props);
-    }
-  }
-
-  updateWordsWithoutCalculate(props) {
-    const words = props.children ? props.children.toString().split(/\s+/) : [];
-    this.setState({ wordsByLines: [{ words }] });
-  }
-
-  calculateWordsByLines(wordsWithComputedWidth, spaceWidth, lineWidth) {
-    const { scaleToFit, height, fontSize, lineSpacing } = this.props;
-    return wordsWithComputedWidth.reduce((result, { word, width }) => {
-      const currentLine = result[result.length - 1];
-
-      if (currentLine && (lineWidth == null || scaleToFit ||
-        (currentLine.width + width + spaceWidth) < lineWidth)) {
-        // Word can be added to an existing line
-        currentLine.words.push(word);
-        currentLine.width += width + spaceWidth;
+      if (currentLine && (currentLine.width + wordWidth + spaceWidth) < width) {
+      // Word can be added to an existing line
+        currentLine.words.push(word)
+        currentLine.width += wordWidth + spaceWidth
       } else {
         // Add first word to line or word is too long to scaleToFit on existing line
-          const newLine = { words: [word], width, showLine: (fontSize + lineSpacing) * (result.length + 1) < height };
-          result.push(newLine); 
+        const newLine = { words: [word],
+          width: wordWidth,
+          showLine: (fontSize + lineSpacing) * (result.length + 1) < height }
+        result.push(newLine)
       }
-      return result;
-    }, []);
-  }
+      return result
+    }, [])
+  }, [children, fontSize, height, lineSpacing, style, width])
 
-
-  render() {
-    const {
-      dx,
-      dy,
-      fontSize,
-      textAnchor,
-      verticalAnchor,
-      scaleToFit,
-      angle,
-      lineHeight,
-      lineSpacing,
-      capHeight,
-      getOffsetX,
-      ...textProps
-    } = this.props;
-    const { wordsByLines } = this.state;
-
-    const x = textProps.x + dx;
-    const y = textProps.y + dy;
-    let offsetX = 0
-    let startDy;
+  const startDy = useMemo(() => {
     switch (verticalAnchor) {
       case 'start':
-        startDy = reduceCSSCalc(`calc(${capHeight})`);
-        break;
-      case 'middle':
-        startDy = reduceCSSCalc(
-          `calc(${(this.displayedLines().length - 1) / 2} * -${lineHeight} + (${capHeight} / 2))`
-        );
-        break;
-      default:
-        startDy = reduceCSSCalc(`calc(${this.displayedLines().length - 1} * -${lineHeight})`);
-        break;
-    }
+        return reduceCSSCalc(`calc(${capHeight})`)
 
-    const transforms = [];
+      case 'middle':
+        return reduceCSSCalc(`calc(${(displayedLines.length - 1) / 2} * -${lineHeight} + (${capHeight} / 2))`)
+
+      default:
+        return reduceCSSCalc(`calc(${displayedLines.length - 1} * -${lineHeight})`)
+    }
+  }, [capHeight, displayedLines.length, lineHeight, verticalAnchor])
+
+  const transform = useMemo(() => {
+    const transforms = []
     if (scaleToFit && wordsByLines.length) {
-      const lineWidth = wordsByLines[0].width;
-      const sx = this.props.width / lineWidth;
-      const sy = sx;
-      const originX = x - sx * x;
-      const originY = y - sy * y;
-      transforms.push(`matrix(${sx}, 0, 0, ${sy}, ${originX}, ${originY})`);
+      const lineWidth = wordsByLines[0].width
+      const sx = width / lineWidth
+      const sy = sx
+      const originX = x - sx * x
+      const originY = y - sy * y
+      transforms.push(`matrix(${sx}, 0, 0, ${sy}, ${originX}, ${originY})`)
     }
     if (angle) {
-      transforms.push(`rotate(${angle}, ${x}, ${y})`);
-    }
-    if (transforms.length) {
-      textProps.transform = transforms.join(' ');
-    }
-    if(getOffsetX){
-      const renderHeight = (fontSize + lineSpacing) * this.displayedLines().length
-      offsetX = getOffsetX(renderHeight)
+      transforms.push(`rotate(${angle}, ${x}, ${y})`)
     }
 
-    return (
-      <text
-        x={x + offsetX}
-        y={y}
-        textAnchor={textAnchor}
-        {...textProps}
-      >
-        {
-        this.displayedLines().map((line, index) => (
-          <tspan x={x + offsetX} dy={index === 0 ? startDy : lineHeight} key={index}>
+    return transforms.length ? transforms.join(' ') : ''
+  }, [angle, scaleToFit, width, wordsByLines, x, y])
+
+  useEffect(() => {
+    // Only perform calculations if using features that require them (multiline, scaleToFit)
+    if ((width || scaleToFit)) {
+      const updatedWordsByLines = calculateWordsByLines()
+      setWordsByLines(updatedWordsByLines)
+    }
+  }, [calculateWordsByLines, scaleToFit, width])
+
+  return (
+    <text
+      ref={ref}
+      textAnchor={textAnchor}
+      transform={transform}
+      x={x}
+      y={y}
+      {...textProps}
+    >
+      {
+        displayedLines.map((line, index) => (
+          <tspan
+            dy={index === 0 ? startDy : lineHeight}
+            key={index}
+            x={x}
+          >
             {line.words.join(' ')}
           </tspan>
         ))
 
       }
 
-      { wordsByLines.length > this.displayedLines().length &&
-       [<tspan key="ellipsis">...</tspan>, <title key="title">{this.props.children}</title>]
-      }
-      </text>
-    );
-  }
+      {wordsByLines.length > displayedLines.length
+       && [<tspan key="ellipsis">...</tspan>, <title key="title">{children}</title>]}
+    </text>
+  )
 }
 
-export default Text;
+Text.propTypes = {
+  angle: PropTypes.number,
+  capHeight: PropTypes.string,
+  children: PropTypes.node.isRequired,
+  dx: PropTypes.number,
+  dy: PropTypes.number,
+  fontSize: PropTypes.number,
+  height: PropTypes.number,
+  lineHeight: PropTypes.string,
+  lineSpacing: PropTypes.number,
+  offsetX: PropTypes.func,
+  scaleToFit: PropTypes.bool,
+  style: PropTypes.object,
+  textAnchor: PropTypes.oneOf(['start', 'middle', 'end', 'inherit']),
+  verticalAnchor: PropTypes.oneOf(['start', 'middle', 'end']),
+  width: PropTypes.number,
+  x: PropTypes.number,
+  y: PropTypes.number,
+}
+
+Text.defaultProps = {
+  angle: undefined,
+  capHeight: '0.71em', // Magic number from d3
+  dx: 0,
+  dy: 0,
+  fontSize: 15,
+  height: undefined,
+  lineHeight: '1em',
+  lineSpacing: 0.3,
+  offsetX: undefined,
+  scaleToFit: false,
+  style: {},
+  textAnchor: 'start',
+  verticalAnchor: 'end', // default SVG behavior
+  width: undefined,
+  x: 0,
+  y: 0,
+}
+
+export default Text
