@@ -1,5 +1,5 @@
+import React, { useCallback, useEffect, useMemo, useState } from 'react'
 import PropTypes from 'prop-types'
-import { useCallback, useEffect, useMemo, useState } from 'react'
 import reduceCSSCalc from 'reduce-css-calc'
 import calculateWordWidths from './utils'
 
@@ -22,6 +22,7 @@ const Text = (props) => {
     width,
     ...textProps
   } = props
+
   const [wordsByLines, setWordsByLines] = useState([])
   const displayedLines = useMemo(() => wordsByLines.filter(({ showLine }) => showLine), [wordsByLines])
 
@@ -42,7 +43,7 @@ const Text = (props) => {
         // Add first word to line or word is too long to scaleToFit on existing line
         const newLine = { words: [word],
           width: wordWidth,
-          showLine: (fontSize + lineSpacing) * (result.length + 1) < height }
+          showLine: height ? (fontSize + lineSpacing) * (result.length + 1) < height : true }
         result.push(newLine)
       }
       return result
@@ -87,17 +88,16 @@ const Text = (props) => {
     }
   }, [calculateWordsByLines, scaleToFit, width])
 
-  return (
-    <text
-      ref={ref}
-      textAnchor={textAnchor}
-      transform={transform}
-      x={x}
-      y={y}
-      {...textProps}
-    >
-      {
-        displayedLines.map((line, index) => (
+  return (displayedLines.length > 1
+    ? (
+      <text
+        textAnchor={textAnchor}
+        transform={transform}
+        x={x}
+        y={y}
+        {...textProps}
+      >
+        {displayedLines.map((line, index) => (
           <tspan
             dy={index === 0 ? startDy : lineHeight}
             key={index}
@@ -105,13 +105,13 @@ const Text = (props) => {
           >
             {line.words.join(' ')}
           </tspan>
-        ))
+        ))}
 
-      }
-
-      {wordsByLines.length > displayedLines.length
+        {wordsByLines.length > displayedLines.length
        && [<tspan key="ellipsis">...</tspan>, <title key="title">{children}</title>]}
-    </text>
+      </text>
+    )
+    : <text {...props} y={lineHeight}>{children}</text>
   )
 }
 

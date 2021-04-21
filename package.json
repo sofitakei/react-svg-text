@@ -1,6 +1,6 @@
 {
   "name": "@studysync/react-svg-text",
-  "version": "0.1.7",
+  "version": "2.0.0",
   "homepage": "https://github.com/sofitakei/react-svg-text",
   "repository": "/sofitakei/react-svg-text",
   "files": [
@@ -13,26 +13,32 @@
     "reduce-css-calc": "2.1.8"
   },
   "devDependencies": {
+    "@storybook/addon-actions": "^3.2.11",
+    "@storybook/react": "^3.2.11",
     "babel-cli": "^6.26.0",
     "babel-jest": "^21.2.0",
     "babel-plugin-transform-class-properties": "^6.24.1",
     "babel-plugin-transform-object-rest-spread": "^6.26.0",
     "babel-plugin-transform-react-jsx": "^6.24.1",
     "babel-preset-env": "^1.6.0",
+    "enzyme": "^3.0.0",
     "gh-pages": "^1.0.0",
     "jest": "^21.2.1",
-    "react": "17.0.2",
-    "react-dom": "17.0.2",
-    "react-test-renderer": "17.0.2"
+    "react": "^16.0.0",
+    "react-dom": "^16.0.0",
+    "react-test-renderer": "^16.0.0"
   },
   "peerDependencies": {
-    "react": "17.0.2"
+    "react": ">=15.4.2"
   },
   "scripts": {
-    "test": "jest --config=jest.config.js",
+    "test": "jest --testPathIgnorePatterns *",
     "build": "NODE_ENV=production babel src -d dist --ignore test.js",
+    "storybook": "start-storybook -p 9009 -c stories",
+    "build-docs": "cd stories && yarn install && cd .. && build-storybook -c stories -o docs",
     "deploy-docs": "gh-pages -d docs",
     "preversion": "yarn build",
+    "postpublish": "yarn build-docs && yarn deploy-docs",
     "prepare": "npm run build"
   },
   "license": "MIT"

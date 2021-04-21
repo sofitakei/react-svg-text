@@ -1,13 +1,29 @@
-import React, { Component } from 'react';
-import Text from '../src/Text';
+import React, { useState } from 'react'
+import Text from '../src/Text'
 
-class Demo extends Component {
-  state = {
+const styles = {
+    exampleText: {
+    width: 200,
+    },
+    range: {
+    marginLeft: 25,
+    width: 275,
+    },
+    svg: {
+    height: 200,
+    display: 'block',
+    border: '1px solid #aaa',
+    marginBottom: 10,
+    },
+}
+
+const Demo = () => {
+  const [state, setState] = useState({
     exampleText: 'This is really long text',
     x: 0,
     y: 0,
     width: 300,
-    height: 200,
+    height: 16,
     angle: 0,
     scaleToFit: false,
     textAnchor: 'start',
@@ -17,43 +33,27 @@ class Demo extends Component {
     lineHeight: '1em',
     showAnchor: true,
     resizeSvg: true,
-  };
-
-  render() {
-    const styles = {
-      exampleText: {
-        width: 200,
-      },
-      range: {
-        marginLeft: 25,
-        width: 275,
-      },
-      svg: {
-        height: 200,
-        display: 'block',
-        border: '1px solid #aaa',
-        marginBottom: 10,
-      },
-    };
+  })
 
     return (
       <div>
         <h2>Demo</h2>
-        <svg width={this.state.resizeSvg ? this.state.width : 300} style={styles.svg}>
+        <svg width={state.resizeSvg ? state.width : 300} style={styles.svg}>
           <Text
-            x={this.state.x}
-            y={this.state.y}
-            width={this.state.width}
-            textAnchor={this.state.textAnchor}
-            verticalAnchor={this.state.verticalAnchor}
-            lineHeight={this.state.lineHeight}
-            scaleToFit={this.state.scaleToFit}
-            angle={this.state.angle}
-            style={{ fontSize: this.state.fontSize, fontFamily: this.state.fontFamily }}
+            x={state.x}
+            y={state.y}
+            width={state.width}
+            textAnchor={state.textAnchor}
+            verticalAnchor={state.verticalAnchor}
+            lineHeight={state.lineHeight}
+            height={state.height}
+            scaleToFit={state.scaleToFit}
+            angle={state.angle}
+            style={{ fontSize: state.fontSize, fontFamily: state.fontFamily }}
           >
-            {this.state.exampleText}
+            {state.exampleText}
           </Text>
-          { this.state.showAnchor && <circle cx={this.state.x} cy={this.state.y} r="2" fill="red" /> }
+          { state.showAnchor && <circle cx={state.x} cy={state.y} r="2" fill="red" /> }
         </svg>
 
         <div>
@@ -61,8 +61,8 @@ class Demo extends Component {
           <input
             type="text"
             style={styles.exampleText}
-            value={this.state.exampleText}
-            onChange={e => this.setState({ exampleText: e.target.value })}
+            value={state.exampleText}
+            onChange={e => setState({...state, exampleText: e.target.value })}
           />
         </div>
 
@@ -72,22 +72,22 @@ class Demo extends Component {
             type="range"
             style={styles.range}
             min="0" max="300"
-            value={this.state.x}
-            onChange={e => this.setState({ x: Number(e.target.value) })}
-          /> 
-          <input type="text" value={this.state.x} onChange={e => this.setState({ x: Number(e.target.value) })} />
+            value={state.x}
+            onChange={e => setState({...state, x: Number(e.target.value) })}
+          />
+          <input type="text" value={state.x} onChange={e => setState({...state, x: Number(e.target.value) })} />
         </div>
-          
+
         <div>
           y:
           <input
             type="range"
             style={styles.range}
             min="0" max="200"
-            value={this.state.y}
-            onChange={e => this.setState({ y: Number(e.target.value) })}
-          /> 
-          <input type="text" value={this.state.y} onChange={e => this.setState({ y: Number(e.target.value) })} />
+            value={state.y}
+            onChange={e => setState({...state, y: Number(e.target.value) })}
+          />
+          <input type="text" value={state.y} onChange={e => setState({...state, y: Number(e.target.value) })} />
         </div>
 
         <div>
@@ -96,9 +96,9 @@ class Demo extends Component {
             type="range"
             style={styles.range}
             min="25" max="300"
-            value={this.state.width}
-            onChange={e => this.setState({ width: Number(e.target.value) })}
-          /> {this.state.width}
+            value={state.width}
+            onChange={e => setState({...state, width: Number(e.target.value) })}
+          /> {state.width}
         </div>
 
         <div>
@@ -107,24 +107,24 @@ class Demo extends Component {
             <input
               type="radio"
               value="start"
-              onChange={e => this.setState({ textAnchor: e.target.value })}
-              checked={this.state.textAnchor === 'start'}
+              onChange={e => setState({...state, textAnchor: e.target.value })}
+              checked={state.textAnchor === 'start'}
             /> start
           </label>
           <label>
             <input
               type="radio"
               value="middle"
-              onChange={e => this.setState({ textAnchor: e.target.value })}
-              checked={this.state.textAnchor === 'middle'}
+              onChange={e => setState({...state, textAnchor: e.target.value })}
+              checked={state.textAnchor === 'middle'}
             /> middle
           </label>
           <label>
             <input
               type="radio"
               value="end"
-              onChange={e => this.setState({ textAnchor: e.target.value })}
-              checked={this.state.textAnchor === 'end'}
+              onChange={e => setState({...state, textAnchor: e.target.value })}
+              checked={state.textAnchor === 'end'}
             /> end
           </label>
         </div>
@@ -135,24 +135,24 @@ class Demo extends Component {
             <input
               type="radio"
               value="start"
-              onChange={e => this.setState({ verticalAnchor: e.target.value })}
-              checked={this.state.verticalAnchor === 'start'}
+              onChange={e => setState({...state, verticalAnchor: e.target.value })}
+              checked={state.verticalAnchor === 'start'}
             /> start
           </label>
           <label>
             <input
               type="radio"
               value="middle"
-              onChange={e => this.setState({ verticalAnchor: e.target.value })}
-              checked={this.state.verticalAnchor === 'middle'}
+              onChange={e => setState({...state, verticalAnchor: e.target.value })}
+              checked={state.verticalAnchor === 'middle'}
             /> middle
           </label>
           <label>
             <input
               type="radio"
               value="end"
-              onChange={e => this.setState({ verticalAnchor: e.target.value })}
-              checked={this.state.verticalAnchor === 'end'}
+              onChange={e => setState({...state, verticalAnchor: e.target.value })}
+              checked={state.verticalAnchor === 'end'}
             /> end
           </label>
         </div>
@@ -161,8 +161,8 @@ class Demo extends Component {
           fontSize:
           <input
             type="text"
-            value={this.state.fontSize}
-            onChange={e => this.setState({ fontSize: e.target.value })}
+            value={state.fontSize}
+            onChange={e => setState({...state, fontSize: e.target.value })}
           />
         </div>
 
@@ -170,8 +170,8 @@ class Demo extends Component {
           fontFamily:
           <input
             type="text"
-            value={this.state.fontFamily}
-            onChange={e => this.setState({ fontFamily: e.target.value })}
+            value={state.fontFamily}
+            onChange={e => setState({...state, fontFamily: e.target.value })}
           />
         </div>
 
@@ -179,18 +179,25 @@ class Demo extends Component {
           lineHeight:
           <input
             type="text"
-            value={this.state.lineHeight}
-            onChange={e => this.setState({ lineHeight: e.target.value })}
+            value={state.lineHeight}
+            onChange={e => setState({...state, lineHeight: e.target.value })}
           />
         </div>
-
+        <div>
+          height:
+          <input
+            type="text"
+            value={state.height}
+            onChange={e => setState({...state, height: e.target.value })}
+          />
+        </div>
         <div>
           angle:
           <input
             type="range"
             min="0" max="360"
-            value={this.state.angle}
-            onChange={e => this.setState({ angle: Number(e.target.value) })}
+            value={state.angle}
+            onChange={e => setState({...state, angle: Number(e.target.value) })}
           />
         </div>
 
@@ -199,8 +206,8 @@ class Demo extends Component {
             scaleToFit:
             <input
               type="checkbox"
-              onChange={e => this.setState({ scaleToFit: !this.state.scaleToFit })}
-              checked={this.state.scaleToFit}
+              onChange={e => setState({...state, scaleToFit: !state.scaleToFit })}
+              checked={state.scaleToFit}
             />
           </label>
         </div>
@@ -210,8 +217,8 @@ class Demo extends Component {
             show anchor:
             <input
               type="checkbox"
-              onChange={e => this.setState({ showAnchor: !this.state.showAnchor })}
-              checked={this.state.showAnchor}
+              onChange={e => setState({...state, showAnchor: !state.showAnchor })}
+              checked={state.showAnchor}
             />
           </label>
         </div>
@@ -221,8 +228,8 @@ class Demo extends Component {
             resize svg (container):
             <input
               type="checkbox"
-              onChange={e => this.setState({ resizeSvg: !this.state.resizeSvg })}
-              checked={this.state.resizeSvg}
+              onChange={e => setState({...state, resizeSvg: !state.resizeSvg })}
+              checked={state.resizeSvg}
             />
           </label>
         </div>
@@ -230,85 +237,85 @@ class Demo extends Component {
         <hr />
 
         <h2>Simple</h2>
-        <svg width={this.state.resizeSvg ? this.state.width : 300} style={styles.svg}>
-          <Text x={0} width={this.state.width} verticalAnchor="start">
-            {this.state.exampleText}
+        <svg width={state.resizeSvg ? state.width : 300} style={styles.svg}>
+          <Text x={0} width={state.width} verticalAnchor="start">
+            {state.exampleText}
           </Text>
         </svg>
 
         <h2>Centered</h2>
-        <svg width={this.state.resizeSvg ? this.state.width : 300} style={styles.svg}>
-          <Text x={this.state.width / 2} width={this.state.width} verticalAnchor="start" textAnchor="middle">
-            {this.state.exampleText}
+        <svg width={state.resizeSvg ? state.width : 300} style={styles.svg}>
+          <Text x={state.width / 2} width={state.width} verticalAnchor="start" textAnchor="middle">
+            {state.exampleText}
           </Text>
         </svg>
 
         <h2>Right-aligned</h2>
-        <svg width={this.state.resizeSvg ? this.state.width : 300} style={styles.svg}>
-          <Text x={this.state.width} width={this.state.width} verticalAnchor="start" textAnchor="end">
-            {this.state.exampleText}
+        <svg width={state.resizeSvg ? state.width : 300} style={styles.svg}>
+          <Text x={state.width} width={state.width} verticalAnchor="start" textAnchor="end">
+            {state.exampleText}
           </Text>
         </svg>
 
         <h2>Line height</h2>
-        <svg width={this.state.resizeSvg ? this.state.width : 300} style={styles.svg}>
-          <Text x={0} width={this.state.width} verticalAnchor="start" lineHeight="2em">
-            {this.state.exampleText}
+        <svg width={state.resizeSvg ? state.width : 300} style={styles.svg}>
+          <Text x={0} width={state.width} verticalAnchor="start" lineHeight="2em">
+            {state.exampleText}
           </Text>
         </svg>
 
         <h2>Styled text (fontWeight)</h2>
-        <svg width={this.state.resizeSvg ? this.state.width : 300} style={styles.svg}>
-          <Text x={0} width={this.state.width} verticalAnchor="start" style={{ fontWeight: 900 }}>
-            {this.state.exampleText}
+        <svg width={state.resizeSvg ? state.width : 300} style={styles.svg}>
+          <Text x={0} width={state.width} verticalAnchor="start" style={{ fontWeight: 900 }}>
+            {state.exampleText}
           </Text>
         </svg>
 
         <h2>Styled (fontSize px)</h2>
-        <svg width={this.state.resizeSvg ? this.state.width : 300} style={styles.svg}>
-          <Text x={0} width={this.state.width} verticalAnchor="start" style={{ fontSize: '24px' }}>
-            {this.state.exampleText}
+        <svg width={state.resizeSvg ? state.width : 300} style={styles.svg}>
+          <Text x={0} width={state.width} verticalAnchor="start" style={{ fontSize: '24px' }}>
+            {state.exampleText}
           </Text>
         </svg>
 
         <h2>Styled (fontSize em)</h2>
-        <svg width={this.state.resizeSvg ? this.state.width : 300} style={styles.svg}>
-          <Text x={0} width={this.state.width} verticalAnchor="start" style={{ fontSize: '1.5em' }}>
-            {this.state.exampleText}
+        <svg width={state.resizeSvg ? state.width : 300} style={styles.svg}>
+          <Text x={0} width={state.width} verticalAnchor="start" style={{ fontSize: '1.5em' }}>
+            {state.exampleText}
           </Text>
         </svg>
 
         <h2>Styled (fontSize rem)</h2>
-        <svg width={this.state.resizeSvg ? this.state.width : 300} style={styles.svg}>
-          <Text x={0} width={this.state.width} verticalAnchor="start" style={{ fontSize: '1.5rem' }}>
-            {this.state.exampleText}
+        <svg width={state.resizeSvg ? state.width : 300} style={styles.svg}>
+          <Text x={0} width={state.width} verticalAnchor="start" style={{ fontSize: '1.5rem' }}>
+            {state.exampleText}
           </Text>
         </svg>
 
         <h2>Styled (fontSize %)</h2>
-        <svg width={this.state.resizeSvg ? this.state.width : 300} style={styles.svg}>
-          <Text x={0} width={this.state.width} verticalAnchor="start" style={{ fontSize: '150%' }}>
-            {this.state.exampleText}
+        <svg width={state.resizeSvg ? state.width : 300} style={styles.svg}>
+          <Text x={0} width={state.width} verticalAnchor="start" style={{ fontSize: '150%' }}>
+            {state.exampleText}
           </Text>
         </svg>
 
         <h2>Fit</h2>
-        <svg width={this.state.resizeSvg ? this.state.width : 300} style={styles.svg}>
-          <Text width={this.state.width} verticalAnchor="start" scaleToFit>
-            {this.state.exampleText}
+        <svg width={state.resizeSvg ? state.width : 300} style={styles.svg}>
+          <Text width={state.width} verticalAnchor="start" scaleToFit>
+            {state.exampleText}
           </Text>
         </svg>
 
         <h2>dx & dy</h2>
-        <svg width={this.state.resizeSvg ? this.state.width : 300} style={styles.svg}>
-          <Text x={50} y={50} dx={10} dy={-10}  width={this.state.width} verticalAnchor="start">
-            {this.state.exampleText}
+        <svg width={state.resizeSvg ? state.width : 300} style={styles.svg}>
+          <Text x={50} y={50} dx={10} dy={-10}  width={state.width} verticalAnchor="start">
+            {state.exampleText}
           </Text>
         </svg>
 
       </div>
-    );
+    )
   }
-}
+
 
 export default Demo;
