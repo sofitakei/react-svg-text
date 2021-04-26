@@ -27,7 +27,7 @@ const Text = (props) => {
     } else {
       measureRef.current = el
     }
-    return () => el ? document.body.removeChild(el) : null
+    return () => el && document.body.contains(el) ? document.body.removeChild(el) : null
   }, [])
 
   useEffect(() => {
