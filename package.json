@@ -1,6 +1,6 @@
 {
   "name": "@studysync/react-svg-text",
-  "version": "2.0.0",
+  "version": "2.0.1",
   "homepage": "https://github.com/sofitakei/react-svg-text",
   "repository": "/sofitakei/react-svg-text",
   "files": [
@@ -23,8 +23,8 @@
     "@testing-library/jest-dom": "^5.11.10",
     "@testing-library/react": "^11.2.6",
     "babel-loader": "^8.2.2",
-    "prop-types": "^15.0.0",
     "jest": "^26.6.3",
+    "prop-types": "^15.0.0",
     "react": "^17.0.0",
     "react-dom": "^17.0.0",
     "react-test-renderer": "^17.0.0"
