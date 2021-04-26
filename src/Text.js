@@ -1,157 +1,112 @@
-import React, { useCallback, useEffect, useMemo, useState } from 'react'
+import { useCallback, useEffect, useMemo, useRef, useState } from 'react'
 import PropTypes from 'prop-types'
-import reduceCSSCalc from 'reduce-css-calc'
-import calculateWordWidths from './utils'
+import { MEASUREMENT_ELEMENT_ID, calculateWordWidths, calculateWordsByLines } from './utils'
 
 const Text = (props) => {
-  const {
-    angle,
-    capHeight,
-    children,
-    dx,
-    dy,
-    fontSize,
-    height,
-    lineHeight,
-    lineSpacing,
-    offsetX,
-    scaleToFit,
-    style,
-    textAnchor,
-    verticalAnchor,
-    width,
-    ...textProps
-  } = props
-
-  const [wordsByLines, setWordsByLines] = useState([])
-  const displayedLines = useMemo(() => wordsByLines.filter(({ showLine }) => showLine), [wordsByLines])
-
-  const x = textProps.x + dx
-  const y = textProps.y + dy
-
-  const calculateWordsByLines = useCallback(() => {
-    const wordWidths = calculateWordWidths(children, style)
-    const { spaceWidth, wordsWithComputedWidth } = wordWidths
-    return wordsWithComputedWidth.reduce((result, { word, width: wordWidth }) => {
-      const currentLine = result[result.length - 1]
-
-      if (currentLine && (currentLine.width + wordWidth + spaceWidth) < width) {
-      // Word can be added to an existing line
-        currentLine.words.push(word)
-        currentLine.width += wordWidth + spaceWidth
-      } else {
-        // Add first word to line or word is too long to scaleToFit on existing line
-        const newLine = { words: [word],
-          width: wordWidth,
-          showLine: height ? (fontSize + lineSpacing) * (result.length + 1) < height : true }
-        result.push(newLine)
-      }
-      return result
-    }, [])
-  }, [children, fontSize, height, lineSpacing, style, width])
-
-  const startDy = useMemo(() => {
-    switch (verticalAnchor) {
-      case 'start':
-        return reduceCSSCalc(`calc(${capHeight})`)
-
-      case 'middle':
-        return reduceCSSCalc(`calc(${(displayedLines.length - 1) / 2} * -${lineHeight} + (${capHeight} / 2))`)
-
-      default:
-        return reduceCSSCalc(`calc(${displayedLines.length - 1} * -${lineHeight})`)
-    }
-  }, [capHeight, displayedLines.length, lineHeight, verticalAnchor])
-
-  const transform = useMemo(() => {
-    const transforms = []
-    if (scaleToFit && wordsByLines.length) {
-      const lineWidth = wordsByLines[0].width
-      const sx = width / lineWidth
-      const sy = sx
-      const originX = x - sx * x
-      const originY = y - sy * y
-      transforms.push(`matrix(${sx}, 0, 0, ${sy}, ${originX}, ${originY})`)
-    }
-    if (angle) {
-      transforms.push(`rotate(${angle}, ${x}, ${y})`)
-    }
-
-    return transforms.length ? transforms.join(' ') : ''
-  }, [angle, scaleToFit, width, wordsByLines, x, y])
+  const { children, maxHeight, maxWidth, verticalAnchor, ...rest } = props
+  const [wordWidths, setWordWidths] = useState()
+  const [textLines, setTextLines] = useState([])
+  const [style, setComputedStyle] = useState()
+  const measureRef = useRef()
+  const displayedLines = useMemo(
+    () => textLines.filter(({ showLine }) => showLine),
+    [textLines],
+  )
+  const ref = useCallback((node) => {
+    setComputedStyle(node !== null ? window.getComputedStyle(node) : '')
+  }, [])
 
   useEffect(() => {
-    // Only perform calculations if using features that require them (multiline, scaleToFit)
-    if ((width || scaleToFit)) {
-      const updatedWordsByLines = calculateWordsByLines()
-      setWordsByLines(updatedWordsByLines)
+    const el = document.getElementById(MEASUREMENT_ELEMENT_ID)
+    if (el === null) {
+      const svg = document.createElementNS('http://www.w3.org/2000/svg', 'svg')
+      svg.setAttribute('id', MEASUREMENT_ELEMENT_ID)
+      document.body.appendChild(svg)
+      svg.appendChild(document.createElementNS('http://www.w3.org/2000/svg', 'text'))
+      measureRef.current = svg
+    } else {
+      measureRef.current = el
     }
-  }, [calculateWordsByLines, scaleToFit, width])
+    return () => el ? document.body.removeChild(el) : null
+  }, [])
 
-  return (displayedLines.length > 1
-    ? (
-      <text
-        textAnchor={textAnchor}
-        transform={transform}
-        x={x}
-        y={y}
-        {...textProps}
-      >
-        {displayedLines.map((line, index) => (
-          <tspan
-            dy={index === 0 ? startDy : lineHeight}
-            key={index}
-            x={x}
-          >
-            {line.words.join(' ')}
-          </tspan>
-        ))}
+  useEffect(() => {
+    const wordWithWidths = calculateWordWidths(style, measureRef.current.firstElementChild, children)
+    setWordWidths(wordWithWidths)
+  }, [children, style])
 
-        {wordsByLines.length > displayedLines.length
-       && [<tspan key="ellipsis">...</tspan>, <title key="title">{children}</title>]}
-      </text>
-    )
-    : <text {...props} y={lineHeight}>{children}</text>
+  useEffect(() => {
+    if (maxWidth && wordWidths) {
+      const lines = calculateWordsByLines(wordWidths, maxWidth, maxHeight)
+      setTextLines(lines)
+    }
+  }, [maxHeight, maxWidth, wordWidths, children])
+
+  const startDy = useMemo(() => {
+    if (wordWidths?.lineHeight) {
+      switch (verticalAnchor) {
+        case 'start':
+          return wordWidths.lineHeight
+
+        case 'middle':
+          return -(((displayedLines.length - 1) * wordWidths.lineHeight) / 2)
+
+        default:
+          return -(displayedLines.length - 1) * wordWidths.lineHeight
+      }
+    } else {
+      return 0
+    }
+  }, [displayedLines.length, verticalAnchor, wordWidths?.lineHeight])
+
+  return (
+    <text
+      ref={ref}
+      {...rest}
+    >
+      {textLines.length <= 1 ? (
+        children
+      ) : (
+        <>
+          {displayedLines.map((line, idx) => (
+            <tspan
+              dx={props.x + props.dx}
+              dy={idx === 0 ? startDy + props.dy : wordWidths.lineHeight}
+              key={idx}
+              x={0}
+            >
+              {line.words.join(' ')}
+            </tspan>
+          ))}
+          {displayedLines.length !== textLines.length && (
+            <>
+              <tspan>...</tspan>
+              <title>{children}</title>
+            </>
+          )}
+        </>
+      )}
+    </text>
   )
 }
 
 Text.propTypes = {
-  angle: PropTypes.number,
-  capHeight: PropTypes.string,
   children: PropTypes.node.isRequired,
   dx: PropTypes.number,
   dy: PropTypes.number,
-  fontSize: PropTypes.number,
-  height: PropTypes.number,
-  lineHeight: PropTypes.string,
-  lineSpacing: PropTypes.number,
-  offsetX: PropTypes.func,
-  scaleToFit: PropTypes.bool,
-  style: PropTypes.object,
-  textAnchor: PropTypes.oneOf(['start', 'middle', 'end', 'inherit']),
+  maxHeight: PropTypes.number,
+  maxWidth: PropTypes.number,
   verticalAnchor: PropTypes.oneOf(['start', 'middle', 'end']),
-  width: PropTypes.number,
   x: PropTypes.number,
-  y: PropTypes.number,
 }
 
 Text.defaultProps = {
-  angle: undefined,
-  capHeight: '0.71em', // Magic number from d3
   dx: 0,
   dy: 0,
-  fontSize: 15,
-  height: undefined,
-  lineHeight: '1em',
-  lineSpacing: 0.3,
-  offsetX: undefined,
-  scaleToFit: false,
-  style: {},
-  textAnchor: 'start',
-  verticalAnchor: 'end', // default SVG behavior
-  width: undefined,
+  maxHeight: undefined,
+  maxWidth: undefined,
+  verticalAnchor: 'start',
   x: 0,
-  y: 0,
 }
 
 export default Text

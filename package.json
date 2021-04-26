@@ -8,38 +8,37 @@
   ],
   "main": "dist/Text.js",
   "dependencies": {
-    "@babel/runtime": "^7.11.2",
-    "prop-types": "^15.5.10",
-    "reduce-css-calc": "2.1.8"
+    "@babel/runtime": "^7.11.2"
   },
   "devDependencies": {
-    "@storybook/addon-actions": "^3.2.11",
-    "@storybook/react": "^3.2.11",
-    "babel-cli": "^6.26.0",
-    "babel-jest": "^21.2.0",
-    "babel-plugin-transform-class-properties": "^6.24.1",
-    "babel-plugin-transform-object-rest-spread": "^6.26.0",
-    "babel-plugin-transform-react-jsx": "^6.24.1",
-    "babel-preset-env": "^1.6.0",
-    "enzyme": "^3.0.0",
-    "gh-pages": "^1.0.0",
-    "jest": "^21.2.1",
-    "react": "^16.0.0",
-    "react-dom": "^16.0.0",
-    "react-test-renderer": "^16.0.0"
+    "@babel/cli": "^7.0.0",
+    "@babel/core": "^7.0.0",
+    "@babel/plugin-proposal-class-properties": "^7.0.0",
+    "@babel/preset-env": "7.13.15",
+    "@babel/preset-react": "7.13.13",
+    "@storybook/addon-actions": "^6.2.9",
+    "@storybook/addon-essentials": "^6.2.9",
+    "@storybook/addon-links": "^6.2.9",
+    "@storybook/react": "^6.2.9",
+    "@testing-library/jest-dom": "^5.11.10",
+    "@testing-library/react": "^11.2.6",
+    "babel-loader": "^8.2.2",
+    "prop-types": "^15.0.0",
+    "jest": "^26.6.3",
+    "react": "^17.0.0",
+    "react-dom": "^17.0.0",
+    "react-test-renderer": "^17.0.0"
   },
   "peerDependencies": {
-    "react": ">=15.4.2"
+    "react": ">=17.0.0"
   },
   "scripts": {
-    "test": "jest --testPathIgnorePatterns *",
+    "test": "jest",
     "build": "NODE_ENV=production babel src -d dist --ignore test.js",
-    "storybook": "start-storybook -p 9009 -c stories",
-    "build-docs": "cd stories && yarn install && cd .. && build-storybook -c stories -o docs",
-    "deploy-docs": "gh-pages -d docs",
+    "storybook": "start-storybook -p 6006",
     "preversion": "yarn build",
-    "postpublish": "yarn build-docs && yarn deploy-docs",
-    "prepare": "npm run build"
+    "prepare": "npm run build",
+    "build-storybook": "build-storybook"
   },
   "license": "MIT"
 }

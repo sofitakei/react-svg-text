@@ -1,41 +1,47 @@
-import PropTypes from 'prop-types'
-import { forwardRef, useCallback, useEffect, useMemo, useState } from 'react'
-import reduceCSSCalc from 'reduce-css-calc'
-
 const MEASUREMENT_ELEMENT_ID = '__react_svg_text_measurement_id'
 
-const getStringWidth = (str, style) => {
-  try {
-    // Calculate length of each word to be used to determine number of words per line
-    let textEl = document.getElementById(MEASUREMENT_ELEMENT_ID)
-    if (!textEl) {
-      const svg = document.createElementNS('http://www.w3.org/2000/svg', 'svg')
-      textEl = document.createElementNS('http://www.w3.org/2000/svg', 'text')
-      textEl.setAttribute('id', MEASUREMENT_ELEMENT_ID)
-      svg.appendChild(textEl)
-      document.body.appendChild(svg)
+const calculateWordsByLines = (wordWidths, maxWidth, maxHeight) => {
+  const { lineHeight, spaceWidth, wordsWithComputedWidth } = wordWidths
+  return wordsWithComputedWidth.reduce((result, { word, width: wordWidth }) => {
+    const currentLine = result[result.length - 1]
+    if (currentLine && currentLine.width + wordWidth + spaceWidth < maxWidth) {
+      // Word can be added to an existing line
+      currentLine.words.push(word)
+      currentLine.width += wordWidth + spaceWidth
+    } else {
+      // Add first word to line or word is too long to scaleToFit on existing line
+      const newLine = {
+        words: [word],
+        width: wordWidth,
+        showLine: maxHeight
+          ? lineHeight * (result.length + 1) < maxHeight
+          : true,
+      }
+      result.push(newLine)
     }
-
-    Object.assign(textEl.style, style)
-    textEl.textContent = str
-    return textEl.getComputedTextLength()
-  } catch (e) {
-    return null
-  }
+    return result
+  }, [])
 }
 
-const calculateWordWidths = (words, style) => {
-  try {
-    const wordArray = words && words.length ? words.toString().split(/\s+/) : []
-    const wordsWithComputedWidth = wordArray.map(word => (
-      { word, width: getStringWidth(word, style) }
+const calculateWordWidths = (style, textNode, words) => {
+  if (style && textNode) {
+    Array.from(style).forEach(key => textNode.style.setProperty(
+      key,
+      style.getPropertyValue(key),
+      style.getPropertyPriority(key),
     ))
-
-    const spaceWidth = getStringWidth('\u00A0', style)
-    return { wordsWithComputedWidth, spaceWidth }
-  } catch (e) {
-    return null
+    const wordArray = [...new Set(words.toString().split(/\s+/))]
+    const wordsWithComputedWidth = wordArray.map((word) => {
+      textNode.textContent = word
+      return { word, width: textNode.getBBox().width }
+    })
+    textNode.textContent = '\u00A0'
+    const spaceWidth = textNode.getComputedTextLength()
+    const lineHeight = textNode.getBBox().height
+    textNode.setAttribute('style', '')
+    return { wordsWithComputedWidth, spaceWidth, lineHeight }
   }
+  return null
 }
 
-export default calculateWordWidths
+export { calculateWordWidths, calculateWordsByLines, MEASUREMENT_ELEMENT_ID }
