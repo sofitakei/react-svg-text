@@ -37,7 +37,7 @@ const Text = (props) => {
 
   useEffect(() => {
     if (maxWidth && wordWidths) {
-      const lines = calculateWordsByLines(wordWidths, maxWidth, maxHeight)
+      const lines = calculateWordsByLines(children, wordWidths, maxWidth, maxHeight)
       setTextLines(lines)
     }
   }, [maxHeight, maxWidth, wordWidths, children])

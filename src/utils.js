@@ -1,8 +1,10 @@
 const MEASUREMENT_ELEMENT_ID = '__react_svg_text_measurement_id'
 
-const calculateWordsByLines = (wordWidths, maxWidth, maxHeight) => {
+const calculateWordsByLines = (words, wordWidths, maxWidth, maxHeight) => {
   const { lineHeight, spaceWidth, wordsWithComputedWidth } = wordWidths
-  return wordsWithComputedWidth.reduce((result, { word, width: wordWidth }) => {
+
+  return words.toString().split(/\s+/).reduce((result, word) => {
+    const wordWidth = wordsWithComputedWidth[word]
     const currentLine = result[result.length - 1]
     if (currentLine && currentLine.width + wordWidth + spaceWidth < maxWidth) {
       // Word can be added to an existing line
@@ -31,10 +33,10 @@ const calculateWordWidths = (style, textNode, words) => {
       style.getPropertyPriority(key),
     ))
     const wordArray = [...new Set(words.toString().split(/\s+/))]
-    const wordsWithComputedWidth = wordArray.map((word) => {
+    const wordsWithComputedWidth = wordArray.reduce((wordMap, word) => {
       textNode.textContent = word
-      return { word, width: textNode.getBBox().width }
-    })
+      return { ...wordMap, [word]: textNode.getBBox().width }
+    }, {})
     textNode.textContent = '\u00A0'
     const spaceWidth = textNode.getComputedTextLength()
     const lineHeight = textNode.getBBox().height
@@ -43,5 +45,6 @@ const calculateWordWidths = (style, textNode, words) => {
   }
   return null
 }
+
 
 export { calculateWordWidths, calculateWordsByLines, MEASUREMENT_ELEMENT_ID }
